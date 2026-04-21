@@ -16,7 +16,8 @@ from telegram.ext import (
     ContextTypes,
 )
 
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8289829407:AAEhp1T3M_jL6mWeVVOrFHn4lIAm86QSOVA")
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8396342382:AAGT2qvzVqQumjmm4B5Jaejppc4eK0FsweQ")
+
 
 BINANCE_BASE_URL = "https://api.binance.com"
 GOLD_API_URL = "https://api.gold-api.com/price/XAU"
@@ -26,8 +27,9 @@ KLINE_INTERVAL = "5m"
 KLINE_LIMIT = 200
 RISK_REWARD_RATIO = 1.5
 ATR_SL_MULTIPLIER = 1.2
+MAX_TP_PERCENT = 0.5
 POSITION_SIZE = 0.01
-TRADE_HORIZON = "~1 hour"
+TRADE_HORIZON = "~1-4 hour"
 
 session: aiohttp.ClientSession | None = None
 
@@ -237,13 +239,14 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
 def compute_trade_levels(price: float, atr_value: float, side: str) -> tuple[float, float]:
     sl_distance = atr_value * ATR_SL_MULTIPLIER
     tp_distance = sl_distance * RISK_REWARD_RATIO
+    max_tp_distance = price * (MAX_TP_PERCENT / 100)
 
     if side == "BUY":
         stop_loss = price - sl_distance
-        take_profit = price + tp_distance
+        take_profit = price + min(tp_distance, max_tp_distance)
     else:
         stop_loss = price + sl_distance
-        take_profit = price - tp_distance
+        take_profit = price - min(tp_distance, max_tp_distance)
 
     return round(stop_loss, 4), round(take_profit, 4)
 
@@ -528,6 +531,7 @@ def build_market_message(
             f"🛑 Stop Loss: {stop_loss}\n"
             f"🎯 Take Profit: {take_profit}\n"
             f"📏 ATR(14): {atr_value:.4f}\n"
+            f"🔒 TP Cap: {MAX_TP_PERCENT:.2f}%\n"
         )
         summary_sl = stop_loss
         summary_tp = take_profit
@@ -536,6 +540,7 @@ def build_market_message(
             "🛑 Stop Loss: N/A\n"
             "🎯 Take Profit: N/A\n"
             "📏 ATR(14): N/A\n"
+            f"🔒 TP Cap: {MAX_TP_PERCENT:.2f}%\n"
         )
         summary_sl = "N/A"
         summary_tp = "N/A"
@@ -637,7 +642,8 @@ async def handle_gold(query) -> None:
         f"🌍 Market Sentiment: SIMPLE\n"
         f"❤️ Health Score: 50.00/100 [MIXED]\n"
         f"🛑 Stop Loss: {stop_loss}\n"
-        f"🎯 Take Profit: {take_profit}\n\n"
+        f"🎯 Take Profit: {take_profit}\n"
+        f"🔒 TP Cap: {MAX_TP_PERCENT:.2f}%\n\n"
         "⚠️ Gold here uses a simpler external price feed. "
         "This is an intraday indication only and signals are not 100% accurate.\n\n"
         "━━━━━━━━━━━━━━\n"
