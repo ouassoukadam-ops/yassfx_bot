@@ -16,7 +16,7 @@ from telegram.ext import (
     ContextTypes,
 )
 
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8396342382:AAGT2qvzVqQumjmm4B5Jaejppc4eK0FsweQ")
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8396342382:AAFywiY4RrW0gC8GFk5vu9MaMQeFt2yE0bA")
 
 
 BINANCE_BASE_URL = "https://api.binance.com"
